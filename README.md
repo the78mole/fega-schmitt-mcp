@@ -77,7 +77,7 @@ uv run mcp dev src/fega_schmitt_mcp/server.py
 
 Server in der MCP-Konfiguration eintragen (`.vscode/mcp.json` bzw. `claude_desktop_config.json`):
 
-**Installation von PyPI (empfohlen, sobald veröffentlicht):**
+**Installation von PyPI:**
 
 ```json
 {
@@ -94,7 +94,7 @@ Server in der MCP-Konfiguration eintragen (`.vscode/mcp.json` bzw. `claude_deskt
 }
 ```
 
-**Installation von GitHub (noch unveröffentlicht):**
+**Installation von GitHub:**
 
 ```json
 {

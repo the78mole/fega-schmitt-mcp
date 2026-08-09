@@ -10,7 +10,7 @@ between the two repositories.
 
 import os
 from decimal import Decimal, InvalidOperation
-from typing import Any
+from typing import Annotated, Any
 
 from fega_schmitt_client import (
     FegaApiError,
@@ -95,8 +95,24 @@ def _result_to_dict(result: PriceAvailResultItem) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
+_PARTNER_WAREHOUSE_DESCRIPTION = (
+    "FEGA & Schmitt-Lagernummer (numerisch, max. 4 Ziffern, z. B. '22') - KEIN Ortsname. "
+    "Nur relevant bei shipment_type='02' (Abholung), um ein anderes als das Standardlager "
+    "anzufragen; bei Lieferung oder wenn das Standardlager genutzt werden soll, weglassen. "
+    "VORBEHALT: In Live-Tests hat jeder getestete Wert von '1' bis '30' bei shipment_type='02' "
+    "auf dasselbe (Heimat-)Lager des Kunden aufgelöst - nur das Weglassen des Parameters ergab "
+    "ein anderes Lager. Es ist unklar, ob der Wert eine globale Lagernummer oder ein "
+    "kundenbezogener Index ist; verlasst euch NICHT darauf, dass ein bestimmter Wert "
+    "zuverlässig eine bestimmte Abholstelle auswählt, ohne das vorher zu verifizieren."
+)
+
+
 @mcp.tool()
-def get_price_availability(items: list[PriceAvailItem]) -> dict[str, Any]:
+def get_price_availability(
+    items: list[PriceAvailItem],
+    shipment_type: Annotated[str, Field(description="Versandart: '01'=Lieferung (Default), '02'=Abholung.")] = "01",
+    partner_warehouse: Annotated[str | None, Field(description=_PARTNER_WAREHOUSE_DESCRIPTION)] = None,
+) -> dict[str, Any]:
     """Preis und Verfügbarkeit für bis zu 999 FEGA & Schmitt-Artikel abfragen.
 
     Fehler auf einzelnen Positionen (unbekannte Artikelnummer, ungültige
@@ -106,11 +122,17 @@ def get_price_availability(items: list[PriceAvailItem]) -> dict[str, Any]:
     Args:
         items: Liste von Artikeln mit Artikelnummer, Menge und optionaler
             Mengeneinheit.
+        shipment_type: Versandart für die gesamte Anfrage (nicht pro
+            Artikel): '01'=Lieferung (Default) oder '02'=Abholung.
+        partner_warehouse: Numerische FEGA & Schmitt-Lagernummer für die
+            gesamte Anfrage (nicht pro Artikel), nur relevant bei
+            shipment_type='02'. Siehe Feldbeschreibung für den Vorbehalt
+            zur unklaren Semantik dieses Werts.
 
     Returns:
         Dict mit ``results`` (Liste der Ergebnisse je Artikel), oder
         ``{"error": ...}`` bei einem Auth-/Transportfehler oder einer
-        ungültigen Anfrage.
+        ungültigen Anfrage (inkl. ungültigem partner_warehouse).
     """
     if not items:
         return {"error": "items darf nicht leer sein."}
@@ -129,7 +151,9 @@ def get_price_availability(items: list[PriceAvailItem]) -> dict[str, Any]:
 
     try:
         client = _build_client()
-        results = client.get_price_availability(request_items)
+        results = client.get_price_availability(
+            request_items, shipment_type=shipment_type, partner_warehouse=partner_warehouse
+        )
     except FegaAuthError as exc:
         return {"error": f"Authentifizierungsfehler: {exc}"}
     except FegaTransportError as exc:

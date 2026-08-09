@@ -4,7 +4,7 @@ All tests patch ``_build_client`` so no real HTTP requests are made and no
 environment variables need to be set.
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 
 from fega_schmitt_client import FegaAuthError, FegaTransportError
 
@@ -87,4 +87,37 @@ class TestGetPriceAvailability:
         mock_client.get_price_availability.side_effect = ValueError("maximal 999 Artikel erlaubt")
         with patch("fega_schmitt_mcp.server._build_client", return_value=mock_client):
             result = get_price_availability([PriceAvailItem(material_number="0815")])
+        assert "error" in result
+
+    def test_default_shipment_type_and_partner_warehouse_passed_through(self, mock_result_ok):
+        mock_client = MagicMock()
+        mock_client.get_price_availability.return_value = [mock_result_ok]
+        with patch("fega_schmitt_mcp.server._build_client", return_value=mock_client):
+            get_price_availability([PriceAvailItem(material_number="0815")])
+
+        mock_client.get_price_availability.assert_called_with([ANY], shipment_type="01", partner_warehouse=None)
+
+    def test_shipment_type_and_partner_warehouse_passed_through(self, mock_result_ok):
+        mock_client = MagicMock()
+        mock_client.get_price_availability.return_value = [mock_result_ok]
+        with patch("fega_schmitt_mcp.server._build_client", return_value=mock_client):
+            get_price_availability(
+                [PriceAvailItem(material_number="0815")],
+                shipment_type="02",
+                partner_warehouse="22",
+            )
+
+        mock_client.get_price_availability.assert_called_with([ANY], shipment_type="02", partner_warehouse="22")
+
+    def test_invalid_partner_warehouse_returns_error_dict(self):
+        mock_client = MagicMock()
+        mock_client.get_price_availability.side_effect = ValueError(
+            "partner_warehouse muss eine numerische Lagernummer mit maximal 4 Ziffern sein, erhalten: 'abcde'"
+        )
+        with patch("fega_schmitt_mcp.server._build_client", return_value=mock_client):
+            result = get_price_availability(
+                [PriceAvailItem(material_number="0815")],
+                shipment_type="02",
+                partner_warehouse="abcde",
+            )
         assert "error" in result
