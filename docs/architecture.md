@@ -1,6 +1,6 @@
 # Architektur
 
-> Entwurfsstand — es existiert noch keine Implementierung.
+> v1 implementiert (Preis-/Verfügbarkeitsabfrage über `get_price_availability`).
 
 ## 1. Zuschnitt dieses Repos
 
@@ -64,12 +64,12 @@ Die eigentliche Request-/Response-Logik, das Fehler-/Returncode-Mapping und das 
 - **Fehler-Serialisierung**: Exceptions aus `fega-schmitt-client` (`FegaTransportError`, `FegaAuthError`) in MCP-konforme Fehlerantworten übersetzen; Positions-Fehler (`status = "error"` je Artikel) werden als Teil des normalen Tool-Ergebnisses zurückgegeben, nicht als MCP-Fehler
 - **Kein** eigenes SOAP-/XML-Handling, keine eigene Kopie der FEGA & Schmitt-Spezifikationen (siehe [`fega-schmitt-client`/docs/specs/](../../../Python/fega-schmitt-client/docs/specs/))
 
-## 4. Technologiewahl (Vorschlag, noch nicht festgelegt)
+## 4. Technologiewahl
 
-- **MCP-Framework:** FastMCP (oder offizielles `mcp`-Python-SDK)
+- **MCP-Framework:** FastMCP (`mcp[cli]`, offizielles Python-SDK)
 - **Paketverwaltung:** `uv`, Linting/Formatting mit `ruff`
-- **Abhängigkeit:** `fega-schmitt-client` als reguläre PyPI-Dependency (kein Vendoring, kein Git-Submodule)
-- **Tests:** `pytest`, mit einem gemockten/gefaketen `FegaSchmittClient`, damit Server-Tests keine echte SOAP-Verbindung benötigen
+- **Abhängigkeit:** `fega-schmitt-client` als reguläre PyPI-Dependency (kein Vendoring, kein Git-Submodule); während der lokalen Entwicklung per `[tool.uv.sources]`-Pfad-Override auf den Checkout unter `GIT/Python/fega-schmitt-client` umgeleitet, im Release-Workflow entfernt
+- **Tests:** `pytest`, mit einem gemockten `FegaSchmittClient` (`_build_client` wird gepatcht), damit Server-Tests keine echte SOAP-Verbindung benötigen
 - **Veröffentlichung:** PyPI, via Trusted Publishing (GitHub Actions)
 
 ## 5. Warum IDS und UGL4 hier ohnehin kein Thema sind
