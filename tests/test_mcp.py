@@ -1,7 +1,7 @@
 """MCP-protocol-level tests for the fega-schmitt MCP server.
 
 These tests call ``mcp.list_tools()`` and ``mcp.call_tool()`` directly on the
-FastMCP instance, which exercises the full MCP dispatch path (argument
+MCPServer instance, which exercises the full MCP dispatch path (argument
 validation, tool lookup, serialisation) without needing a real HTTP transport.
 """
 
@@ -37,7 +37,7 @@ async def test_each_tool_has_description():
 async def test_get_price_availability_has_items_parameter():
     tools = await mcp.list_tools()
     tool = next(t for t in tools if t.name == "get_price_availability")
-    params = tool.inputSchema.get("properties", {})
+    params = tool.input_schema.get("properties", {})
     assert "items" in params
 
 
@@ -76,7 +76,7 @@ async def test_call_get_price_availability_empty_items_returns_error():
 def _parse_result(result):
     """Extract the raw Python value returned by mcp.call_tool().
 
-    FastMCP returns a tuple ``(list[ContentBlock], raw_value)``.
-    Index 1 is the un-serialised Python dict/list.
+    MCPServer returns a ``CallToolResult`` whose ``structured_content``
+    holds the un-serialised Python dict/list.
     """
-    return result[1]
+    return result.structured_content
