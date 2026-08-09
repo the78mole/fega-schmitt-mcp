@@ -20,14 +20,14 @@ from fega_schmitt_client import (
     PriceAvailRequestItem,
     PriceAvailResultItem,
 )
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 from pydantic import BaseModel, Field
 
 # ---------------------------------------------------------------------------
 # Server setup
 # ---------------------------------------------------------------------------
 
-mcp = FastMCP(
+mcp = MCPServer(
     "fega-schmitt",
     instructions=(
         "This server queries prices and availability for articles at FEGA & Schmitt "
