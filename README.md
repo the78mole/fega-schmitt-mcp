@@ -5,14 +5,16 @@
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-> **Status: v1 implementiert** (Preis-/Verfügbarkeitsabfrage), noch nicht auf PyPI veröffentlicht.
+> **Status:** Preis-/Verfügbarkeitsabfrage (SOAP) sowie Webshop-Zugriff (Suche, Artikeldetails,
+> Warenkörbe, Bestellungen, ...) implementiert, noch nicht auf PyPI veröffentlicht.
 
 Ein **dünner** [MCP](https://modelcontextprotocol.io)-Server, der KI-Assistenten (z. B. Claude)
 Zugriff auf Daten von **FEGA & Schmitt Elektrogroßhandel** gibt — Preis- und
-Verfügbarkeitsabfragen für Artikel.
+Verfügbarkeitsabfragen für Artikel sowie Zugriff auf die Webshop-Weboberfläche (Suche,
+Artikeldetails, Warenkörbe, Bestellungen, Aktionsangebote).
 
-Die gesamte Protokoll-/API-Logik (SOAP, Auth, Fehlercodes, XML) lebt **nicht** in diesem Repo,
-sondern in der eigenständigen Python-Library
+Die gesamte Protokoll-/API-Logik (SOAP, Auth, Fehlercodes, XML, Webshop-Scraping) lebt **nicht**
+in diesem Repo, sondern in der eigenständigen Python-Library
 [`fega-schmitt-client`](https://github.com/the78mole/fega-schmitt-client)
 (Repo unter `GIT/Python/`, auf [PyPI](https://pypi.org/project/fega-schmitt-client/) veröffentlicht).
 Dieses Repo bildet nur die Brücke zwischen MCP-Protokoll und dieser Library.
@@ -22,6 +24,7 @@ graph LR
     Host["MCP-Host<br/>(Claude Desktop / Claude Code / ...)"] -->|stdio, JSON-RPC| MCP["fega-schmitt-mcp<br/>(dieses Repo)"]
     MCP -->|Python-Aufruf| LIB["fega-schmitt-client<br/>(eigenes Repo + PyPI-Paket)"]
     LIB -->|SOAP/HTTPS| API["FEGA & Schmitt<br/>Preis-/Verfügbarkeitsservice"]
+    LIB -->|HTTPS, Scraping| SHOP["FEGA & Schmitt<br/>Webshop-Frontend"]
 
     style MCP fill:#2b6cb0,color:#fff
 ```
@@ -40,9 +43,34 @@ graph LR
 
 ## Tools
 
+### SOAP-Preisservice
+
 | Tool | Beschreibung |
 |------|-------------|
 | `get_price_availability` | Preis und Verfügbarkeit für bis zu 999 Artikel je Anfrage. Eingabe: Liste von Artikelnummern mit Menge und optionaler Mengeneinheit. Ausgabe je Artikel: Verfügbarkeitsstatus, Nettopreis, Listenpreis, Zu-/Abschläge, Lagerzuordnung. Fehlerfälle (unbekannte Artikelnummer, ungültige Mengeneinheit, Mengenüberlauf) werden je Position gemeldet, ohne die gesamte Anfrage abzubrechen. |
+
+### Webshop (best-effort, nicht offiziell dokumentiert)
+
+Diese Tools sprechen die Kunden-Weboberfläche (`shop.fega.de`) statt einer dokumentierten
+Schnittstelle an — siehe [`fega-schmitt-client`/docs/extensions.md](https://github.com/the78mole/fega-schmitt-client/blob/main/docs/extensions.md)
+für Details/Vorbehalte je Methode. Nutzen dieselben Zugangsdaten wie `get_price_availability`.
+
+| Tool | Beschreibung |
+|------|-------------|
+| `web_search_articles` | Artikelsuche über Artikelnummer, EAN, Herstellerteilenummer oder Freitext (ein gemeinsames Suchfeld). |
+| `web_get_article` | Alle bekannten Artikeldetails in einem Aufruf: EAN, Herstellernummer(n), Kategorie, eigene Artikelnummer, Attribute, Bilder, Schnittkosten sowie Artikelnummern von Zubehör/Varianten/Alternativen/Cross-Sell. |
+| `web_set_article_number` | Eigene (kundenspezifische) Artikelnummer für einen Artikel setzen. |
+| `web_get_cable_lengths` | Verfügbare Kabellängen (Trommeln/Reststücke) eines Kabelartikels je Lagerstandort. |
+| `web_list_articles_by_category` | Artikel einer UWG-Warengruppe auflisten. |
+| `web_get_favorites` | Gespeicherte Favoritenliste abrufen. |
+| `web_get_deal_campaigns` | Aktive Aktionsangebote-Kampagnen auflisten. |
+| `web_get_deal_articles` | Artikel einer Aktionsangebote-Kampagne abrufen. |
+| `web_get_daily_deals` | Tagesangebote abrufen. |
+| `web_get_second_choice_articles` | "2. Wahl"/B-Ware-Artikel abrufen. |
+| `web_get_cart` | Inhalt eines Warenkorbs (Standard: aktuell aktiver) abrufen. |
+| `web_get_cart_list` | Alle Warenkörbe des Kunden auflisten. |
+| `web_get_order_list` | Bestellübersicht abrufen. |
+| `web_get_order` | Positionen einer einzelnen Bestellung abrufen. |
 
 ## Installation
 
@@ -141,8 +169,9 @@ Server in der MCP-Konfiguration eintragen (`.vscode/mcp.json` bzw. `claude_deskt
 |----------|---------|--------------|
 | `FEGA_CUSTOMER_NUMBER` | – (erforderlich) | FEGA & Schmitt-Kundennummer (`PARTNER_PURCHASER`) |
 | `FEGA_SHOP_PASSWORD` | – (erforderlich) | Shop-Kennwort (`LEGITIMATION_ID`) |
-| `FEGA_ENDPOINT` | `https://soap.fega.de/priceavail.php` | Abweichende Service-URL, z. B. für Tests gegen einen Mock-Server |
-| `FEGA_TIMEOUT` | `30` | HTTP-Timeout in Sekunden |
+| `FEGA_ENDPOINT` | `https://soap.fega.de/priceavail.php` | Abweichende SOAP-Service-URL, z. B. für Tests gegen einen Mock-Server |
+| `FEGA_SHOP_BASE_URL` | `https://shop.fega.de` | Abweichende Webshop-Basis-URL für die `web_*`-Tools |
+| `FEGA_TIMEOUT` | `30` | HTTP-Timeout in Sekunden (gilt für beide Backends) |
 
 Fehlen `FEGA_CUSTOMER_NUMBER`/`FEGA_SHOP_PASSWORD`, liefert das Tool `{"error": ...}` statt eine
 Exception zu werfen — Secrets werden nie geloggt oder im Code hinterlegt (siehe
@@ -194,11 +223,34 @@ liefert:
 }
 ```
 
+Webshop-Beispiel:
+
+```text
+web_get_article(material_number="0815")
+```
+
+liefert (gekürzt):
+
+```json
+{
+  "material_number": "0815",
+  "ean": "4012345678901",
+  "own_article_number": "MEIN-0815",
+  "category": {"id": "UWG_14_87", "name": "Leitungsschutzschalter"},
+  "attributes": {"Nennspannung": "230 V"},
+  "images": [{"url": "https://shop.fega.de/img/0815-1.jpg", "is_primary": true}],
+  "accessories": ["1000"],
+  "variants": ["1001", "1002"],
+  "alternatives": [],
+  "cross_sell": ["1004"]
+}
+```
+
 ## Über FEGA & Schmitt
 
 FEGA & Schmitt ist ein deutscher Elektrogroßhändler. Details zu den verfügbaren Schnittstellen
-(SOAP-Preisservice, IDS-Branchenstandard, UGL4-Branchenstandard) und warum aktuell nur der
-SOAP-Preisservice angebunden wird, siehe die Architekturbeschreibung der Library:
+(SOAP-Preisservice, IDS-Branchenstandard, UGL4-Branchenstandard, Webshop-Frontend) siehe die
+Architekturbeschreibung der Library:
 [`fega-schmitt-client`/docs/architecture.md](https://github.com/the78mole/fega-schmitt-client/blob/main/docs/architecture.md).
 
 ## Lokale Entwicklung
