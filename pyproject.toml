@@ -47,10 +47,6 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/fega_schmitt_mcp"]
 
-# Override fega-schmitt-client to use local development version
-[tool.uv.sources]
-fega-schmitt-client = { path = "/home/daniel/GIT/Python/fega-schmitt-client", editable = true }
-
 [tool.ruff]
 line-length = 120
 target-version = "py310"
