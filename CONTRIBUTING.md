@@ -7,8 +7,31 @@ Thank you for your interest in contributing!
 ```bash
 git clone https://github.com/the78mole/fega-schmitt-mcp.git
 cd fega-schmitt-mcp
-uv sync
+uv sync --extra dev
 ```
+
+`uv.lock` is authoritative: CI installs it with `uv sync --locked`, which fails
+if the lockfile has drifted from `pyproject.toml`. After changing a dependency,
+run `uv lock` and commit the result.
+
+### Working against a local fega-schmitt-client
+
+The lockfile deliberately resolves `fega-schmitt-client` from PyPI, so the repo
+stays reproducible for everyone. To develop against a local checkout instead,
+overlay it as an editable install after syncing:
+
+```bash
+uv sync --extra dev
+uv pip install -e ../../Python/fega-schmitt-client
+uv run --no-sync pytest
+```
+
+`--no-sync` matters: a plain `uv run` re-syncs from the lockfile and would
+replace the editable install with the PyPI release. Re-run the overlay after
+any `uv sync`.
+
+Do not add a `[tool.uv.sources]` override to `pyproject.toml` for this — uv only
+accepts `sources` there, so it would land in the repo and break other checkouts.
 
 ## Running the Server Locally
 
