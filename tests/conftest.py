@@ -1,6 +1,6 @@
 """Shared pytest fixtures for fega-schmitt-mcp tests."""
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 
 import pytest
@@ -82,7 +82,7 @@ def mock_search_result():
 def mock_article():
     return Article(
         material_number="0815",
-        fetched_at=datetime(2026, 8, 12, tzinfo=UTC),
+        fetched_at=datetime(2026, 8, 12, tzinfo=timezone.utc),
         ean="4012345678901",
         manufacturer_item_number="ABC-123",
         manufacturer_item_number_alt=None,

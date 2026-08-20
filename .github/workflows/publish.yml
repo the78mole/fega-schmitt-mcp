@@ -12,27 +12,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v7
 
-      - name: Remove local dev source overrides
-        run: |
-          python3 - <<'EOF'
-          import re, pathlib
-          path = pathlib.Path("pyproject.toml")
-          content = path.read_text()
-          content = re.sub(
-              r"\n# Override[^\n]*\n\[tool\.uv\.sources\][^\[]*",
-              "\n",
-              content,
-              flags=re.DOTALL,
-          )
-          path.write_text(content)
-          EOF
-
       - name: Install uv
-        uses: astral-sh/setup-uv@v9.0.0
+        uses: astral-sh/setup-uv@v10.0.1
         with:
           enable-cache: true
           python-version: ${{ matrix.python-version }}
@@ -40,11 +25,14 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
 
+      # --no-sources ignores [tool.uv.sources] (local dev path overrides),
+      # resolving against the published package metadata instead.
       - name: Install dependencies
-        run: uv sync --extra dev --python ${{ matrix.python-version }}
+        run: uv sync --extra dev --no-sources --python ${{ matrix.python-version }}
 
       - name: Run tests
-        run: uv run pytest || [ $? -eq 5 ]
+        run: uv run --no-sync pytest
+
   build:
     name: Build package
     runs-on: ubuntu-latest
@@ -70,30 +58,14 @@ jobs:
         run: |
           sed -i 's/^version = ".*"/version = "${{ steps.version.outputs.version }}"/' pyproject.toml
 
-      - name: Remove local dev source overrides
-        run: |
-          python3 - <<'EOF'
-          import re, pathlib
-          path = pathlib.Path("pyproject.toml")
-          content = path.read_text()
-          # Remove the [tool.uv.sources] section (local path overrides are dev-only)
-          content = re.sub(
-              r"\n# Override[^\n]*\n\[tool\.uv\.sources\][^\[]*",
-              "\n",
-              content,
-              flags=re.DOTALL,
-          )
-          path.write_text(content)
-          EOF
-
       - name: Install uv
-        uses: astral-sh/setup-uv@v9.0.0
+        uses: astral-sh/setup-uv@v10.0.1
 
       - name: Set up Python
         run: uv python install 3.12
 
       - name: Build package
-        run: uv build
+        run: uv build --no-sources
 
       - name: Upload dist artifacts
         uses: actions/upload-artifact@v7
