@@ -25,10 +25,10 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
 
-      # --no-sources ignores [tool.uv.sources] (local dev path overrides),
-      # resolving against the published package metadata instead.
+      # --locked fails if uv.lock has drifted from pyproject.toml, so CI
+      # installs exactly the locked dependency versions.
       - name: Install dependencies
-        run: uv sync --extra dev --no-sources --python ${{ matrix.python-version }}
+        run: uv sync --locked --extra dev --python ${{ matrix.python-version }}
 
       - name: Run tests
         run: uv run --no-sync pytest
@@ -65,7 +65,7 @@ jobs:
         run: uv python install 3.12
 
       - name: Build package
-        run: uv build --no-sources
+        run: uv build
 
       - name: Upload dist artifacts
         uses: actions/upload-artifact@v7
