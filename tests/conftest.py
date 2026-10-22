@@ -5,6 +5,7 @@ from decimal import Decimal
 
 import pytest
 from fega_schmitt_client import PriceAvailResultItem, Surcharge
+from fega_schmitt_client.datanorm.store import DatanormArticle, DatanormSearchHit
 from fega_schmitt_client.web import (
     Article,
     ArticleImage,
@@ -23,6 +24,18 @@ from fega_schmitt_client.web.models import CableLength
 @pytest.fixture
 def anyio_backend():
     return "asyncio"
+
+
+@pytest.fixture(autouse=True)
+def isolated_environment(tmp_path, monkeypatch):
+    """Credentials set, and all client caches (DATANORM, web cache, shop session) in tmp_path.
+
+    Without this, tests would read the real ``~/.cache/fega-schmitt-client``.
+    """
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+    monkeypatch.setattr("fega_schmitt_mcp.server._customer_number", "4711")
+    monkeypatch.setattr("fega_schmitt_mcp.server._shop_password", "secret")
+    monkeypatch.setattr("fega_schmitt_mcp.server._datanorm_db", None)
 
 
 @pytest.fixture
@@ -60,6 +73,39 @@ def mock_result_error():
         net_amount=None,
         list_amount=None,
         surcharges=[],
+    )
+
+
+# ---------------------------------------------------------------------------
+# DATANORM fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def mock_datanorm_article():
+    return DatanormArticle(
+        material_number="0815",
+        short_text_1="ACME Leitungsschutzschalter",
+        short_text_2="B16 1polig",
+        unit="STK",
+        price_unit=1,
+        list_price=Decimal("15.00"),
+        net_price=Decimal("9.80"),
+        ean="4012345678901",
+        manufacturer_type="LS-B16",
+        manufacturer_item_number="ABC-123",
+        main_group="14",
+        main_group_name="Installationsgeräte",
+        sub_group="87",
+        sub_group_name="Leitungsschutzschalter",
+        delivery_date="2026-10-21",
+    )
+
+
+@pytest.fixture
+def mock_datanorm_hit():
+    return DatanormSearchHit(
+        material_number="0815", description="ACME Leitungsschutzschalter B16 1polig", matched="ean"
     )
 
 
