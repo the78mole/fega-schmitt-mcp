@@ -398,15 +398,15 @@ wheels = [
 
 [[package]]
 name = "fega-schmitt-client"
-version = "0.0.8"
+version = "0.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
     { name = "httpx" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4e/0c/4c94a4be68425c3152007bd5888cdb239f72e2f95828ca93821d2d586ab4/fega_schmitt_client-0.0.8.tar.gz", hash = "sha256:c4393c7559b79dfa058f7d58e13bbe3ee3b2ebc3ed8eca9e2df66534c1ece148", size = 127466, upload-time = "2026-08-11T22:38:26.996Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/bf/e3/becf90b23b8a2668ce062fc822ca7366f617e72e504375ef6f29ef853a2f/fega_schmitt_client-0.1.0.tar.gz", hash = "sha256:1f526af56b83d6d61e68fb4f558aeae83adb0a745fd933da8688f08b6a3085b3", size = 168128, upload-time = "2026-10-22T22:53:40.421Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c5/8a/6f72842bf9d968e4b698286c9407dbadfb56343ddbf3ca24a906fc922445/fega_schmitt_client-0.0.8-py3-none-any.whl", hash = "sha256:02167b8f096abf7cf390d3bae778ca40f10b69ba4177ae482b52535164f1d92d", size = 52600, upload-time = "2026-08-11T22:38:25.733Z" },
+    { url = "https://files.pythonhosted.org/packages/ec/bd/d131b473d0a1def509cb248d4b72c8bfc4ac2cd889f7b50b6d2e1a32e264/fega_schmitt_client-0.1.0-py3-none-any.whl", hash = "sha256:0db5508d8af6f1e3d18d1148a3306f6f1849ecc8a1f892617b9c9202aba0853f", size = 79834, upload-time = "2026-10-22T22:53:39.046Z" },
 ]
 
 [[package]]
@@ -429,7 +429,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "anyio", extras = ["trio"], marker = "extra == 'dev'", specifier = ">=4.0" },
-    { name = "fega-schmitt-client", specifier = ">=0.0.2" },
+    { name = "fega-schmitt-client", specifier = ">=0.1.0" },
     { name = "mcp", extras = ["cli"], specifier = ">=2,<2.2" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.0" },

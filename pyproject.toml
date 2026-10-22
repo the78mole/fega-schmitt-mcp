@@ -21,7 +21,7 @@ classifiers = [
 ]
 dependencies = [
     "mcp[cli]>=2,<2.2",
-    "fega-schmitt-client>=0.0.2",
+    "fega-schmitt-client>=0.1.0",
 ]
 
 [project.optional-dependencies]

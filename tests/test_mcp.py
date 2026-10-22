@@ -8,14 +8,13 @@ validation, tool lookup, serialisation) without needing a real HTTP transport.
 from unittest.mock import MagicMock, patch
 
 import pytest
-from fega_schmitt_client import FegaAuthError
 
 from fega_schmitt_mcp.server import mcp
 
 EXPECTED_TOOLS = {
+    "search_articles",
+    "get_article",
     "get_price_availability",
-    "web_search_articles",
-    "web_get_article",
     "web_set_article_number",
     "web_get_cable_lengths",
     "web_list_articles_by_category",
@@ -86,28 +85,26 @@ async def test_call_get_price_availability_empty_items_returns_error():
 
 
 # ---------------------------------------------------------------------------
-# Tool call – web_search_articles
+# Tool schemas - webshop consent
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.anyio
-async def test_call_web_search_articles_returns_results(mock_search_result):
-    mock_client = MagicMock()
-    mock_client.__exit__.return_value = False
-    mock_client.search.return_value = [mock_search_result]
-    with patch("fega_schmitt_mcp.server._build_web_client", return_value=mock_client):
-        result = await mcp.call_tool("web_search_articles", {"query": "0815"})
-
-    data = _parse_result(result)
-    assert data["results"][0]["material_number"] == "0815"
+async def test_web_tools_take_allow_web_defaulting_to_false():
+    tools = await mcp.list_tools()
+    web_tools = [t for t in tools if t.name.startswith("web_") or t.name in ("search_articles", "get_article")]
+    for tool in web_tools:
+        allow_web = tool.input_schema["properties"].get("allow_web")
+        assert allow_web is not None, f"Tool '{tool.name}' has no allow_web parameter"
+        assert allow_web["default"] is False
+        assert "ctx" not in tool.input_schema["properties"]
 
 
 @pytest.mark.anyio
-async def test_call_web_search_articles_missing_credentials_returns_error():
-    with patch("fega_schmitt_mcp.server._build_web_client", side_effect=FegaAuthError("nope")):
-        result = await mcp.call_tool("web_search_articles", {"query": "0815"})
-    data = _parse_result(result)
-    assert "error" in data
+async def test_soap_tool_has_no_allow_web():
+    tools = await mcp.list_tools()
+    tool = next(t for t in tools if t.name == "get_price_availability")
+    assert "allow_web" not in tool.input_schema["properties"]
 
 
 # ---------------------------------------------------------------------------
